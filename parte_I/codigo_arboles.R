@@ -14,3 +14,18 @@ tree_spec <- decision_tree() %>% #Escoger una clase de modelo
 tree_model_mass <- tree_spec %>% 
   fit(formula=outcome~mass,
       data=diabetes)
+
+
+# HACER SPLIT -------------------------------------------------------------
+set.seed(2023)
+
+diabetes_split <- initial_split(diabetes, prop=.75, strata = outcome)
+
+diab_train <- training(diabetes_split)
+diab_test <- testing(diabetes_split)
+
+
+tree_spec %>% 
+  fit(formula=outcome~mass,
+      data=diab_train)
+
