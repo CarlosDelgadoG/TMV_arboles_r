@@ -48,3 +48,20 @@ caret::confusionMatrix(table(predicciones$outcome,predicciones$.pred_class))
 # Accuracy: De todas las predicciones cuantas fueron correctas 
 # Senstividad: De las predicciones positivas cuantas fueron correctas
 # Especificidad: De las predicciones negativas cuantas fueron correctas
+
+
+# VALIDACION CRUZADA ------------------------------------------------------
+
+set.seed(2022)
+
+diab_fols <- vfold_cv(diab_train,10)
+
+
+fits_cv= fit_resamples(tree_spec,
+              outcome~mass,
+              resamples=diab_fols,
+              metrics = metric_set(accuracy,sensitivity,specificity))
+
+
+
+collect_metrics(fits_cv)
