@@ -25,7 +25,21 @@ diab_train <- training(diabetes_split)
 diab_test <- testing(diabetes_split)
 
 
-tree_spec %>% 
+modelo_arbol=tree_spec %>% 
   fit(formula=outcome~mass,
       data=diab_train)
 
+
+# HACER PREDICCIONES ------------------------------------------------------
+predicciones= predict(modelo_arbol,testing(diabetes_split))%>%
+              mutate(outcome=testing(diabetes_split)$outcome)
+
+
+
+
+# MATRIZ DE CONFUSION -----------------------------------------------------
+
+caret::confusionMatrix(table(predicciones$outcome,predicciones$.pred_class))
+# Accuracy: De todas las predicciones cuantas fueron correctas 
+# Senstividad: De las predicciones positivas cuantas fueron correctas
+# Especificidad: De las predicciones negativas cuantas fueron correctas
