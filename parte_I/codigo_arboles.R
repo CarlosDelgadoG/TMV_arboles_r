@@ -1,5 +1,6 @@
 library(tidymodels)
 library(mlbench)
+library(rpart.plot)
 
 data(PimaIndiansDiabetes2)
 diabetes<- PimaIndiansDiabetes2%>%
@@ -29,6 +30,10 @@ modelo_arbol=tree_spec %>%
   fit(formula=outcome~mass,
       data=diab_train)
 
+#Visualizar arbol
+
+print(modelo_arbol)
+rpart.plot(modelo_arbol$fit)
 
 # HACER PREDICCIONES ------------------------------------------------------
 predicciones= predict(modelo_arbol,testing(diabetes_split))%>%
