@@ -1,3 +1,14 @@
+diabetes <- readRDS("datos/diabetes.RDS")
+
+
+# HACER SPLIT -------------------------------------------------------------
+set.seed(2023)
+
+diabetes_split <- initial_split(diabetes, prop=.75, strata = diabetes)
+
+diab_train <- training(diabetes_split)
+diab_test <- testing(diabetes_split)
+
 
 # TUNE --------------------------------------------------------------------
 
@@ -19,18 +30,20 @@ grilla_boost <- grid_regular(parameters(boost_tune),
 # Iterar sobre la grilla -----------------------------------------------------------
 #Dentro de la función se declaran los folds
 resultados_boost_tune <-tune_grid(boost_tune,
-                                  outcome ~ mass + pregnant + glucose+age,
+                                  diabetes~.,
                                   resamples=vfold_cv(diab_train,v=3),
                                   grid = grilla_boost,
                                   metrics=metric_set(roc_auc,specificity,sensitivity)) 
 
 collect_metrics(resultados_boost_tune)
+
+autoplot(resultados_boost_tune)
 # Seleccionar parámetros --------------------------------------------------
 
 
 # Estimar el mejor modelo -------------------------------------------------
 boost_final <- finalize_model(boost_tune,
                               select_best(resultados_boost_tune))%>%
-                fit(outcome ~ mass + pregnant + glucose+age,
+                fit(diabetes ~.,
                     diab_train)
 
