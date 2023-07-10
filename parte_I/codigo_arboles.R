@@ -1,10 +1,19 @@
 library(tidymodels)
-library(mlbench)
 library(rpart.plot)
+library(baguette)
+library(xgboost)
 
-data(PimaIndiansDiabetes2)
-diabetes<- PimaIndiansDiabetes2%>%
-  mutate(outcome= relevel(diabetes, ref = "pos"))
+set.seed(2023)
+
+# HACER SPLIT -------------------------------------------------------------
+diabetes_split <- initial_split(diabetes, prop=.75, strata = outcome)
+
+diab_train <- training(diabetes_split)
+diab_test <- testing(diabetes_split)
+
+
+
+# Especificar el modelo ---------------------------------------------------
 
 
 
@@ -12,22 +21,8 @@ tree_spec <- decision_tree() %>% #Escoger una clase de modelo
   set_engine("rpart")%>% #Escoger un engine
   set_mode("classification") #Escoger un modo
 
-tree_model_mass <- tree_spec %>% 
-  fit(formula=outcome~mass,
-      data=diabetes)
-
-
-# HACER SPLIT -------------------------------------------------------------
-set.seed(2023)
-
-diabetes_split <- initial_split(diabetes, prop=.75, strata = outcome)
-
-diab_train <- training(diabetes_split)
-diab_test <- testing(diabetes_split)
-
-
 modelo_arbol=tree_spec %>% 
-  fit(formula=outcome~mass,
+  fit(formula=diabetes~.,
       data=diab_train)
 
 #Visualizar arbol
@@ -44,7 +39,7 @@ predicciones= predict(modelo_arbol,testing(diabetes_split))%>%
 
 # MATRIZ DE CONFUSION -----------------------------------------------------
 
-caret::confusionMatrix(table(predicciones$outcome,predicciones$.pred_class))
+caret::confusionMatrix(table(predicciones$.pred_class,predicciones$outcome))
 # Accuracy: De todas las predicciones cuantas fueron correctas 
 # Senstividad: De todos los valores positivos cuantos fueron correctamente identificados
 # Espeficidad: De todos los valores negativos encontrados, cuantes fueron correctamente identificados
@@ -106,3 +101,60 @@ mejor_modelo <- finalize_model(arbol_untune, select_best(tune_results))%>%
 
 
 rpart.plot(mejor_modelo$fit)
+
+
+#
+
+# BAGGING -----------------------------------------------------------------
+
+
+spec_bagged <- bag_tree()%>%
+              set_mode("classification")%>%
+              set_engine("rpart",times=100)
+
+model_bagged <- fit(spec_bagged,
+                    outcome~mass,
+                    diab_train)
+
+
+cv_bagg <- fit_resamples(spec_bagged,
+                            outcome ~ mass + pregnant + glucose+age, 
+                            resamples = vfold_cv(diab_train,3),
+                            metrics = metric_set(roc_auc,specificity,sensitivity))
+
+# Collect metrics
+collect_metrics(cv_bagg)
+
+
+
+# RANDOM FOREST -----------------------------------------------------------
+
+spec_forest <- rand_forest()%>%
+  set_mode("classification")%>%
+  set_engine("ranger")
+        
+
+
+cv_forest <- fit_resamples(spec_forest,
+                         outcome ~ mass + pregnant + glucose+age, 
+                         resamples = vfold_cv(drop_na(diab_train),3),
+                         metrics = metric_set(roc_auc,specificity,sensitivity),
+                        control= control_resamples(save_pred = TRUE, save_workflow = TRUE))
+
+collect_metrics(cv_forest)
+
+# BOOSTING ----------------------------------------------------------------
+
+spec_boost <- boost_tree()%>%
+              set_mode("classification")%>%
+  set_engine("xgboost")
+
+
+
+cv_boost <- fit_resamples(spec_boost,
+                           outcome ~ mass + pregnant + glucose+age, 
+                           resamples = vfold_cv(drop_na(diab_train),3),
+                           metrics = metric_set(roc_auc,specificity,sensitivity),
+                           control= control_resamples(save_pred = TRUE, save_workflow = TRUE))
+
+collect_metrics(cv_boost)
