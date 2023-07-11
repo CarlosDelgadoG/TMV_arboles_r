@@ -5,8 +5,9 @@ library(xgboost)
 
 set.seed(2023)
 
+diabetes <- readRDS("datos/diabetes.RDS")
 # HACER SPLIT -------------------------------------------------------------
-diabetes_split <- initial_split(diabetes, prop=.75, strata = outcome)
+diabetes_split <- initial_split(diabetes, prop=.75, strata = diabetes)
 
 diab_train <- training(diabetes_split)
 diab_test <- testing(diabetes_split)
@@ -14,32 +15,33 @@ diab_test <- testing(diabetes_split)
 
 
 # Especificar el modelo ---------------------------------------------------
-
-
-
-tree_spec <- decision_tree() %>% #Escoger una clase de modelo
+tree_spec<- decision_tree() %>% #Escoger una clase de modelo
   set_engine("rpart")%>% #Escoger un engine
-  set_mode("classification") #Escoger un modo
+  set_mode("classification")
 
-modelo_arbol=tree_spec %>% 
+
+modelo_arbol%>% 
   fit(formula=diabetes~.,
       data=diab_train)
 
 #Visualizar arbol
 
 print(modelo_arbol)
-rpart.plot(modelo_arbol$fit)
+rpart.plot(modelo_arbol$fit,extra=2)
 
 # HACER PREDICCIONES ------------------------------------------------------
-predicciones= predict(modelo_arbol,testing(diabetes_split))%>%
-              mutate(outcome=testing(diabetes_split)$outcome)
+predicciones= list(predict(modelo_arbol,diab_train),predict(modelo_arbol,diab_train,type="prob"))%>%
+              bind_cols(diab_train)
 
 
+accuracy(predicciones,estimate=.pred_class,truth=diabetes)
+sensitivity(predicciones,estimate=.pred_class,truth=diabetes)
 
+roc_auc(predicciones,estimate=.pred_Positivo,truth=diabetes)
 
 # MATRIZ DE CONFUSION -----------------------------------------------------
 
-caret::confusionMatrix(table(predicciones$.pred_class,predicciones$outcome))
+caret::confusionMatrix(table(predicciones$.pred_class,predicciones$diabetes))
 # Accuracy: De todas las predicciones cuantas fueron correctas 
 # Senstividad: De todos los valores positivos cuantos fueron correctamente identificados
 # Espeficidad: De todos los valores negativos encontrados, cuantes fueron correctamente identificados
@@ -53,9 +55,9 @@ diab_fold <- vfold_cv(diab_train,3)
 
 
 fits_cv= fit_resamples(tree_spec,
-              outcome~mass,
+              diabetes~.,
               resamples=diab_fold,
-              metrics = metric_set(accuracy,sensitivity,specificity))
+              metrics = metric_set(roc_auc,accuracy, sensitivity))
 
 
 
@@ -77,12 +79,12 @@ grilla <- expand.grid(tree_depth=c(5,10,15),
 
 
 
-# Tune along the grid
+
 tune_results <- tune_grid(arbol_untune, 
-                          outcome~mass+pregnant,
+                          diabetes~.,
                           resamples = diab_fold,
                           grid = grilla,
-                          metrics = metric_set(roc_auc, sens, spec))
+                          metrics = metric_set(roc_auc,accuracy,sensitivity))
 
 
 

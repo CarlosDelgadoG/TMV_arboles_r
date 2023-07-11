@@ -8,7 +8,7 @@ diabetes_split <- initial_split(diabetes, prop=.75, strata = diabetes)
 
 diab_train <- training(diabetes_split)
 diab_test <- testing(diabetes_split)
-
+diab_fold<- vfold_cv(diab_train,v=3)
 
 # TUNE --------------------------------------------------------------------
 
@@ -31,9 +31,9 @@ grilla_boost <- grid_regular(parameters(boost_tune),
 #Dentro de la función se declaran los folds
 resultados_boost_tune <-tune_grid(boost_tune,
                                   diabetes~.,
-                                  resamples=vfold_cv(diab_train,v=3),
+                                  resamples=diab_fold,
                                   grid = grilla_boost,
-                                  metrics=metric_set(roc_auc,specificity,sensitivity)) 
+                                  metrics=metric_set(roc_auc,accuracy,sensitivity)) 
 
 collect_metrics(resultados_boost_tune)
 
