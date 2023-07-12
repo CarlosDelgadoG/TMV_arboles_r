@@ -15,7 +15,8 @@ diab_test <- testing(diabetes_split)
 
 
 # Especificar el modelo ---------------------------------------------------
-tree_spec<- decision_tree(tree_depth = 4) %>% #Escoger una clase de modelo
+tree_spec<- decision_tree(tree_depth = 4,
+                          min_n = 50) %>% #Escoger una clase de modelo
   set_engine("rpart")%>% #Escoger un engine
   set_mode("classification")
 
@@ -31,11 +32,16 @@ rpart.plot(modelo_arbol$fit,extra=2)
 
 # HACER PREDICCIONES ------------------------------------------------------
 predicciones= list(predict(modelo_arbol,diab_train),predict(modelo_arbol,diab_train,type="prob"))%>%
-              bind_cols(diab_train)
+              bind_cols(select(diab_train,diabetes))
+
+
+# Calculo de métricas -----------------------------------------------------
 
 
 accuracy(predicciones,estimate=.pred_class,truth=diabetes)
+
 sensitivity(predicciones,estimate=.pred_class,truth=diabetes)
+specificity(predicciones,estimate=.pred_class,truth=diabetes)
 
 roc_auc(predicciones,estimate=.pred_Positivo,truth=diabetes)
 
@@ -53,8 +59,14 @@ set.seed(2022)
 
 diab_fold <- vfold_cv(diab_train,3)
 
+tree_spec_cv<- decision_tree() %>% #Escoger una clase de modelo
+  set_engine("rpart")%>% #Escoger un engine
+  set_mode("classification")
 
-fits_cv= fit_resamples(tree_spec,
+
+
+
+fits_cv= fit_resamples(tree_spec_cv,
               diabetes~.,
               resamples=diab_fold,
               metrics = metric_set(roc_auc,accuracy, sensitivity))
@@ -74,8 +86,8 @@ arbol_untune <- decision_tree(tree_depth = tune(),
                 set_mode("classification")
 
 
-grilla <- expand.grid(tree_depth=c(5,10,15),
-                      min_n=c(10,20,30))
+grilla <- expand.grid(tree_depth=c(5,10,15,25),
+                      min_n=c(10,20,30,50))
 
 
 

@@ -41,11 +41,18 @@ spec_forest <- rand_forest()%>%
   set_mode("classification")%>%
   set_engine("ranger")
 
+modelo_forest <- fit(spec_forest,
+                    diabetes~.,
+                    diab_train)
 
 
-cv_forest <- fit_resamples(spec_forest,
+spec_forest_cv <- rand_forest(mtry=3,trees = 100)%>%
+  set_mode("classification")%>%
+  set_engine("ranger")
+
+cv_forest <- fit_resamples(spec_forest_cv,
                            diabetes ~ ., 
-                           resamples = vfold_cv(diab_train,3),
+                           resamples = diab_fold,
                            metrics =metric_set(roc_auc,accuracy,sensitivity),
                            control= control_resamples(save_pred = TRUE, save_workflow = TRUE))
 

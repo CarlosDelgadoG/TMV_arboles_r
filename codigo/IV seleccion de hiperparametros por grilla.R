@@ -14,10 +14,9 @@ diab_fold<- vfold_cv(diab_train,v=3)
 
 #Busca identificar los parámetros que se quieren ajustar
 
-boost_tune <- boost_tree(trees=100,
+boost_tune <- boost_tree(trees=tune(),
                          learn_rate = tune(),
-                         tree_depth = tune(),
-                         sample_size = tune())%>%
+                         tree_depth = tune())%>%
               set_mode("classification")%>%
               set_engine("xgboost")
 

@@ -30,8 +30,6 @@ boost_spec <-   boost_tree()%>%
 
 # Lista de especificaciones con nombre ------------------------------------
 
-
-
 lista_specs <- list(tree_spec,rf_spec,boost_spec)
 names(lista_specs)<- c("arbol","rf","boost")
 
