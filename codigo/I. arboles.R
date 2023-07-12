@@ -15,12 +15,12 @@ diab_test <- testing(diabetes_split)
 
 
 # Especificar el modelo ---------------------------------------------------
-tree_spec<- decision_tree() %>% #Escoger una clase de modelo
+tree_spec<- decision_tree(tree_depth = 4) %>% #Escoger una clase de modelo
   set_engine("rpart")%>% #Escoger un engine
   set_mode("classification")
 
 
-modelo_arbol%>% 
+modelo_arbol<- tree_spec%>% 
   fit(formula=diabetes~.,
       data=diab_train)
 
