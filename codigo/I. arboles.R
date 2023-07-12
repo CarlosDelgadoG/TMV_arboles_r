@@ -43,7 +43,8 @@ accuracy(predicciones,estimate=.pred_class,truth=diabetes)
 sensitivity(predicciones,estimate=.pred_class,truth=diabetes)
 specificity(predicciones,estimate=.pred_class,truth=diabetes)
 
-roc_auc(predicciones,estimate=.pred_Positivo,truth=diabetes)
+roc_auc(predicciones,diabetes,.pred_Positivo)
+
 
 # MATRIZ DE CONFUSION -----------------------------------------------------
 
@@ -109,8 +110,8 @@ autoplot(tune_results)
 
 
 mejor_modelo <- finalize_model(arbol_untune, select_best(tune_results))%>%
-                fit(outcome~mass+pregnant,
-                    diabetes)
+                fit(diabetes~.,
+                    diab_train)
 
 
 

@@ -60,8 +60,8 @@ names(preds)<-names(lista_specs)[i]
 lapply(1:length(lista_specs),function(i){
 # Generamos el auc para cada modelo
   roc_auc(preds_modelos,
-          truth = diabetes,
-          estimate =!!rlang::sym(names(lista_specs)[i]) )%>%
+          diabetes,
+          !!rlang::sym(names(lista_specs)[i]) )%>%
     mutate(modelo=names(lista_specs)[i])})%>%
   bind_rows()
 
